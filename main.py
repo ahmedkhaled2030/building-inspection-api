@@ -57,6 +57,14 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# ---------------------------------------------------------------------------
+# Health check (keeps Render awake & lets frontend detect cold starts)
+# ---------------------------------------------------------------------------
+@app.get("/health")
+async def health():
+    return {"status": "ok"}
+
+
 # Load the YOLO model once at startup
 MODEL_PATH = Path(__file__).parent / "best.pt"
 model = YOLO(str(MODEL_PATH))
