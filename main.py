@@ -269,28 +269,118 @@ def _generate_pdf(image_results: List[dict]) -> str:
     tmp_files: list = []          # temp image files to clean up later
 
     # ================================================================
-    # PAGE 1 – COVER PAGE
+    # PAGE 1 – COVER PAGE (Premium Layout)
     # ================================================================
-    cover_content = [
-        [Paragraph("<br/><br/><br/><br/><br/>", S["body"])],
-        [Paragraph("THERMAL BUILDING<br/>INSPECTION REPORT", S["cover_title"])],
+
+    # -- Top accent band --
+    accent_band = Table([[""]], colWidths=[content_width], rowHeights=[6])
+    accent_band.setStyle(TableStyle([
+        ("BACKGROUND", (0, 0), (-1, -1), _ACCENT),
+        ("TOPPADDING", (0, 0), (-1, -1), 0),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
+    ]))
+
+    # -- Company header band --
+    company_header = Table(
+        [[Paragraph(
+            '<font size="16"><b>ThermaVision</b></font>'
+            '&nbsp;&nbsp;<font size="16" color="#60a5fa">Diagnostics</font>',
+            ParagraphStyle("ch", fontName="Helvetica-Bold", fontSize=16,
+                           textColor=white, alignment=TA_LEFT, leading=20),
+        ),
+        Paragraph(
+            "Building Envelope Specialists",
+            ParagraphStyle("cs", fontName="Helvetica", fontSize=9,
+                           textColor=HexColor("#94a3b8"), alignment=TA_RIGHT, leading=12),
+        )]],
+        colWidths=[content_width * 0.65, content_width * 0.35],
+        rowHeights=[40],
+    )
+    company_header.setStyle(TableStyle([
+        ("BACKGROUND", (0, 0), (-1, -1), HexColor("#0c1f36")),
+        ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+        ("LEFTPADDING", (0, 0), (0, 0), 24),
+        ("RIGHTPADDING", (-1, 0), (-1, 0), 24),
+        ("TOPPADDING", (0, 0), (-1, -1), 0),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
+    ]))
+
+    # -- Main cover body --
+    cover_body = [
+        [Paragraph("<br/><br/><br/><br/>", S["body"])],
+        [Paragraph(
+            '<font size="34"><b>THERMAL BUILDING<br/>INSPECTION REPORT</b></font>',
+            ParagraphStyle("ct2", fontName="Helvetica-Bold", fontSize=34,
+                           leading=42, textColor=white, alignment=TA_CENTER),
+        )],
         [Paragraph("<br/>", S["body"])],
-        [Paragraph("Infrared Thermographic Survey<br/>Moisture &amp; Water Leak Assessment", S["cover_subtitle"])],
-        [Paragraph("<br/><br/>", S["body"])],
-        [Paragraph(f'<font color="#ffffff">━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</font>', S["body_center"])],
-        [Paragraph("<br/>", S["body"])],
-        [Paragraph(f"Report Reference: &nbsp; TBI-{report_id}", S["cover_subtitle"])],
-        [Paragraph(f"Date of Inspection: &nbsp; {now.strftime('%B %d, %Y')}", S["cover_date"])],
-        [Paragraph(f"Issued: &nbsp; {now.strftime('%B %d, %Y  —  %H:%M')}", S["cover_date"])],
-        [Paragraph("<br/><br/>", S["body"])],
-        [Paragraph("Prepared for: ____________________________________", S["cover_date"])],
-        [Paragraph("<br/>", S["body"])],
-        [Paragraph("Site Address: ____________________________________", S["cover_date"])],
-        [Paragraph("<br/><br/><br/><br/><br/><br/>", S["body"])],
-        [Paragraph("CONFIDENTIAL", S["cover_subtitle"])],
-        [Paragraph("ThermaVision Diagnostics  •  Building Envelope Specialists", S["small_grey"])],
+        [Paragraph(
+            '<font color="#60a5fa">━━━━━━━━━━━</font> &nbsp; '
+            '<font color="#94a3b8">Infrared Thermographic Survey</font> &nbsp; '
+            '<font color="#60a5fa">━━━━━━━━━━━</font>',
+            ParagraphStyle("div", fontSize=11, textColor=HexColor("#94a3b8"),
+                           alignment=TA_CENTER, leading=14),
+        )],
+        [Paragraph("Moisture &amp; Water Leak Assessment", S["cover_subtitle"])],
+        [Paragraph("<br/><br/><br/>", S["body"])],
     ]
-    cover_table = Table(cover_content, colWidths=[content_width])
+
+    # -- Info card (reference, date, client) --
+    info_rows = [
+        ["Report Reference", f"TBI-{report_id}"],
+        ["Date of Inspection", now.strftime("%B %d, %Y")],
+        ["Issued", now.strftime("%B %d, %Y  —  %H:%M")],
+        ["Prepared for", "____________________________________"],
+        ["Site Address", "____________________________________"],
+    ]
+    info_data = []
+    for label, value in info_rows:
+        info_data.append([
+            Paragraph(
+                f'<font color="#60a5fa"><b>{label}</b></font>',
+                ParagraphStyle("il", fontName="Helvetica-Bold", fontSize=10,
+                               textColor=HexColor("#60a5fa"), alignment=TA_RIGHT, leading=14),
+            ),
+            Paragraph(
+                f'<font color="#e2e8f0">{value}</font>',
+                ParagraphStyle("iv", fontName="Helvetica", fontSize=10,
+                               textColor=HexColor("#e2e8f0"), alignment=TA_LEFT, leading=14),
+            ),
+        ])
+
+    info_table = Table(info_data, colWidths=[content_width * 0.35, content_width * 0.50])
+    info_table.setStyle(TableStyle([
+        ("BACKGROUND", (0, 0), (-1, -1), HexColor("#0c1f36")),
+        ("TOPPADDING", (0, 0), (-1, -1), 8),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 8),
+        ("LEFTPADDING", (0, 0), (-1, -1), 14),
+        ("RIGHTPADDING", (0, 0), (-1, -1), 14),
+        ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+        ("LINEABOVE", (0, 0), (-1, 0), 0.5, HexColor("#1e3a5f")),
+        ("LINEBELOW", (0, -1), (-1, -1), 0.5, HexColor("#1e3a5f")),
+        ("LINEBELOW", (0, 2), (-1, 2), 0.5, HexColor("#1e3a5f")),
+        ("ROUNDEDCORNERS", [6, 6, 6, 6]),
+    ]))
+
+    cover_body.append([info_table])
+    cover_body.append([Paragraph("<br/><br/><br/><br/>", S["body"])])
+
+    # -- Bottom section: confidential + badges --
+    cover_body.append([Paragraph(
+        '<font color="#dc2626" size="12"><b>CONFIDENTIAL</b></font>',
+        ParagraphStyle("conf", fontSize=12, textColor=HexColor("#dc2626"),
+                       alignment=TA_CENTER, leading=16, fontName="Helvetica-Bold"),
+    )])
+    cover_body.append([Paragraph("<br/>", S["body"])])
+    cover_body.append([Paragraph(
+        '<font color="#60a5fa">■</font> &nbsp; Non-Destructive Testing &nbsp;&nbsp;&nbsp; '
+        '<font color="#60a5fa">■</font> &nbsp; Infrared Thermography &nbsp;&nbsp;&nbsp; '
+        '<font color="#60a5fa">■</font> &nbsp; Building Diagnostics',
+        ParagraphStyle("badges", fontSize=8, textColor=HexColor("#94a3b8"),
+                       alignment=TA_CENTER, leading=12),
+    )])
+
+    cover_table = Table(cover_body, colWidths=[content_width])
     cover_table.setStyle(TableStyle([
         ("BACKGROUND",  (0, 0), (-1, -1), _NAVY),
         ("TOPPADDING",  (0, 0), (-1, -1), 0),
@@ -299,9 +389,10 @@ def _generate_pdf(image_results: List[dict]) -> str:
         ("RIGHTPADDING",(0, 0), (-1, -1), 20),
         ("VALIGN",      (0, 0), (-1, -1), "MIDDLE"),
         ("ALIGN",       (0, 0), (-1, -1), "CENTER"),
-        ("LINEABOVE",   (0, 0), (-1, 0), 2, _NAVY),
-        ("LINEBELOW",   (0, -1), (-1, -1), 2, _NAVY),
     ]))
+
+    elements.append(accent_band)
+    elements.append(company_header)
     elements.append(cover_table)
     elements.append(PageBreak())
 
