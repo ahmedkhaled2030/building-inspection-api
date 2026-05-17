@@ -760,6 +760,32 @@ async def detect(files: List[UploadFile] = File(...)):
 
 
 # ---------------------------------------------------------------------------
+# Live stream frame detection endpoint
+# ---------------------------------------------------------------------------
+@app.post("/api/detect-frame")
+async def detect_frame(file: UploadFile = File(...)):
+    """Accept one video frame, run detection, and return an annotated frame.
+
+    This endpoint is optimized for live camera usage from the frontend. It does
+    not generate a PDF report; it only returns the latest annotated frame and
+    its detections so the browser can update the live preview quickly.
+    """
+
+    _validate_image(file.filename or "frame.jpg")
+
+    img_bytes = await file.read()
+    annotated_b64, detections, _ = _process_image(img_bytes, file.filename or "frame.jpg")
+
+    return {
+        "success": True,
+        "filename": file.filename,
+        "image_base64": annotated_b64,
+        "detections": detections,
+        "total_detections": len(detections),
+    }
+
+
+# ---------------------------------------------------------------------------
 # Optional: direct PDF download endpoint
 # ---------------------------------------------------------------------------
 @app.get("/api/reports/{filename}")
